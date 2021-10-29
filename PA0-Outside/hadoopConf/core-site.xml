@@ -1,0 +1,6 @@
+<configuration>
+    <property>
+        <name>fs.default.name</name>
+        <value>hdfs://pierre:30141</value>
+    </property>
+</configuration>
