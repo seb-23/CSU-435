@@ -1,0 +1,20 @@
+
+----------------------------------------------------------------------------------
+| Path Length of 1 with 13141 paths
+| Path Length of 2 with 3767 paths
+| Path Length of 3 with 2528 paths
+| Path Length of 4 with 1081 paths
+| Path Length of 5 with 525 paths
+| Path Length of 6 with 241 paths
+| Path Length of 7 with 122 paths
+| Path Length of 8 with 65 paths
+| Path Length of 9 with 31 paths
+| Path Length of 10 with 22 paths
+----------------------------------------------------------------------------------
+| Total Shortest Path Length: 38527
+----------------------------------------------------------------------------------
+| Total Number of Vertices: 8877
+----------------------------------------------------------------------------------
+| The Average Geodesic Path Length: 4.889694E-4
+----------------------------------------------------------------------------------
+
