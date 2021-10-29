@@ -1,0 +1,185 @@
+
+
+Getting Started:  
+Here Are Some Commands To Make Your Life Easier Just Copy And Paste These 
+Commands In Terminal And You Shall Be Okay...
+Obviously You Will Have To Change:
+The Path of The Jar File :  ~/cs435/PA2/tmp/PA2.jar
+& The Input File:           /friends_final
+But You Shall Be Okay, Just Alter Those Filds Here To Make It Easier. 
+
+This README Breaksdown What You Need, In What Order and How.
+
+Table of Contents:
+- Time It Takes To Run Program
+- Files Needed To Run A Successful Program
+- Sample Output
+- Order of Execution
+- Remove Files Commands
+- Check File Content Commands
+- Hadoop MapReduce Getting Started Commands
+
+
+
+Takes 17 Minutes To Run Geodesic Average & Less Than 5 Minutes To Run 
+PathLengthsPreprocessor & Cluster Coefficient & Analysis.
+
+
+
+Files Needed To Run A Successful Program:
+Geodesic.java - Calculates & Stores All Possible Paths For A Given Path Length.
+		Format Example For Length 4:  Node1~Node2~Node3~Node4
+PathLengths.java - This Calculates The Path Count for Each Path Length from 
+		   1 to 10 and Stores It All Into One Output File.
+Preprocessor.java - This Outputs A File That Contains No Duplicates for the 
+		    Given Input File & It Also Calculates the Number of Unique
+		    Nodes & Edges Within The Given Input File.
+		    This File Must Be Exectued Before Executing Cluster.java
+Cluster.java - Caluclates the Triple & Triangle Count of the Given Input File
+	       Using the No Duplicates File Calculated From Preprocessor.java.
+Analysis.java - This Brings All the File Aforementioned And Calulates the 
+		GeodesicAverageTable & ClusterCoefficientTable & CL-randomTable.
+		Below is a Sample Output of What The Mentioned Tables Contain.
+README - Absolutely Required to Know What To Execute And In What Order.
+Input File - The Graph.
+
+
+
+Sample Output:
+
+salem:~/cs435/PA2/tmp$ $HADOOP_HOME/bin/hadoop fs -cat /GeodesicAverageTable/part-r-00000 /ClusterCoefficientTable/part-r-00000 /CL-randomTable/part-r-00000
+
+----------------------------------------------------------------------------------
+| Path Length of 1 with 13141 paths
+| Path Length of 2 with 315807 paths
+| Path Length of 3 with 491483 paths
+| Path Length of 4 with 1896983 paths
+| Path Length of 5 with 2410871 paths
+| Path Length of 6 with 3156998 paths
+| Path Length of 7 with 2870633 paths
+| Path Length of 8 with 1687611 paths
+| Path Length of 9 with 1086734 paths
+| Path Length of 10 with 446554 paths
+----------------------------------------------------------------------------------
+| Total Shortest Path Length: 88544944
+----------------------------------------------------------------------------------
+| Total Number of Vertices: 8877
+----------------------------------------------------------------------------------
+| The Average Geodesic Path Length: 2.2475545
+----------------------------------------------------------------------------------
+
+
+----------------------------------------------------------------------------------
+| Total Number of Triples: 363674
+----------------------------------------------------------------------------------
+| Total Number of Triangles: 1724.0
+----------------------------------------------------------------------------------
+| Global Clustering Coefficient: 0.014221528
+----------------------------------------------------------------------------------
+
+
+----------------------------------------------------------------------------------
+| L-random: 23.175716
+----------------------------------------------------------------------------------
+| C-random: 1.6676157E-4
+----------------------------------------------------------------------------------
+
+
+
+Hadoop MapReduce Getting Started Commands:
+
+$HADOOP_HOME/sbin/start-dfs.sh
+ssh salem
+$HADOOP_HOME/sbin/start-yarn.sh
+jps
+cd cs435/PA2/tmp
+$HADOOP_HOME/sbin/stop-yarn.sh
+$HADOOP_HOME/sbin/stop-dfs.sh
+
+$HADOOP_HOME/bin/hadoop fs -ls /
+$HADOOP_HOME/bin/hadoop fs -put ~/cs435/PA2/PA2/PA2_Sample.txt /
+
+$HADOOP_HOME/bin/hadoop com.sun.tools.javac.Main Geodesic.java
+$HADOOP_HOME/bin/hadoop com.sun.tools.javac.Main PathLengths.java
+$HADOOP_HOME/bin/hadoop com.sun.tools.javac.Main Preprocessor.java
+$HADOOP_HOME/bin/hadoop com.sun.tools.javac.Main Cluster.java
+$HADOOP_HOME/bin/hadoop com.sun.tools.javac.Main Analysis.java
+
+jar cf PA2.jar Geodesic*.class Cluster*.class Analysis*.class Preprocessor*.class PathLengths*.class
+
+
+
+
+Order of Execution:  Part 1 Geodesic & PathLengths   Part 2 Preprocessor & Cluster    Part 3 Analysis
+
+Geodesic
+$HADOOP_HOME/bin/hadoop jar ~/cs435/PA2/tmp/PA2.jar Geodesic /friends_final /PathsWithLength1 /PathsWithLength2 /PathsWithLength3 /PathsWithLength4 /PathsWithLength5 /PathsWithLength6 /PathsWithLength7 /PathsWithLength8 /PathsWithLength9 /PathsWithLength10 /L2_1of2 /L3_1of3 /L3_2of3 /L4_1of4 /L4_2of4 /L4_3of4 /L5_1of5 /L5_2of5 /L5_3of5 /L5_4of5 /L6_1of6 /L6_2of6 /L6_3of6 /L6_4of6 /L6_5of6 /L7_1of7 /L7_2of7 /L7_3of7 /L7_4of7 /L7_5of7 /L7_6of7 /L8_1of8 /L8_2of8 /L8_3of8 /L8_4of8 /L8_5of8 /L8_6of8 /L8_7of8 /L9_1of9 /L9_2of9 /L9_3of9 /L9_4of9 /L9_5of9 /L9_6of9 /L9_7of9 /L9_8of9 /L10_1of10 /L10_2of10 /L10_3of10 /L10_4of10 /L10_5of10 /L10_6of10 /L10_7of10 /L10_8of10 /L10_9of10 /another /anotherone /anothertwo
+
+PathLengths
+$HADOOP_HOME/bin/hadoop jar ~/cs435/PA2/tmp/PA2.jar PathLengths /PathsWithLength1 /PathsWithLength2 /PathsWithLength3 /PathsWithLength4 /PathsWithLength5 /PathsWithLength6 /PathsWithLength7 /PathsWithLength8 /PathsWithLength9 /PathsWithLength10 /pathLengths
+
+Preprocessor
+$HADOOP_HOME/bin/hadoop jar ~/cs435/PA2/tmp/PA2.jar Preprocessor /friends_final /nodes /edges
+
+Cluster
+$HADOOP_HOME/bin/hadoop jar ~/cs435/PA2/tmp/PA2.jar Cluster /friends_final /listOfAllTriples /tripleCount /triangleCount
+
+Analysis
+$HADOOP_HOME/bin/hadoop jar ~/cs435/PA2/tmp/PA2.jar Analysis /pathLengths /nodes /GeodesicAverageTable /triangleCount /tripleCount /ClusterCoefficientTable /edges /CL-randomTable
+
+
+
+
+Check File Content:
+
+Geodesic
+$HADOOP_HOME/bin/hadoop fs -cat /PathsWithLength1/part-r-00000
+$HADOOP_HOME/bin/hadoop fs -cat /PathsWithLength2/part-r-00000
+$HADOOP_HOME/bin/hadoop fs -cat /PathsWithLength3/part-r-00000
+$HADOOP_HOME/bin/hadoop fs -cat /PathsWithLength4/part-r-00000
+$HADOOP_HOME/bin/hadoop fs -cat /PathsWithLength5/part-r-00000
+$HADOOP_HOME/bin/hadoop fs -cat /PathsWithLength6/part-r-00000
+$HADOOP_HOME/bin/hadoop fs -cat /PathsWithLength7/part-r-00000
+$HADOOP_HOME/bin/hadoop fs -cat /PathsWithLength8/part-r-00000
+$HADOOP_HOME/bin/hadoop fs -cat /PathsWithLength9/part-r-00000
+$HADOOP_HOME/bin/hadoop fs -cat /PathsWithLength10/part-r-00000
+
+PathLengths
+$HADOOP_HOME/bin/hadoop fs -cat /pathLengths/part-r-00000
+
+Preprocessor
+$HADOOP_HOME/bin/hadoop fs -cat /nodes/part-r-00000
+$HADOOP_HOME/bin/hadoop fs -cat /edges/part-r-00000
+
+Cluster
+$HADOOP_HOME/bin/hadoop fs -cat /listOfAllTriples/part-r-00000
+$HADOOP_HOME/bin/hadoop fs -cat /tripleCount/part-r-00000
+$HADOOP_HOME/bin/hadoop fs -cat /triangleCount/part-r-00000
+
+Analysis
+$HADOOP_HOME/bin/hadoop fs -cat /GeodesicAverageTable/part-r-00000 /ClusterCoefficientTable/part-r-00000 /CL-randomTable/part-r-00000
+
+
+
+
+Remove Files:
+
+Geodesic
+$HADOOP_HOME/bin/hadoop fs -rm -R /PathsWithLength1 /PathsWithLength2 /PathsWithLength3 /PathsWithLength4 /PathsWithLength5 /PathsWithLength6 /PathsWithLength7 /PathsWithLength8 /PathsWithLength9 /PathsWithLength10 /L2_1of2 /L3_1of3 /L3_2of3 /L4_1of4 /L4_2of4 /L4_3of4 /L5_1of5 /L5_2of5 /L5_3of5 /L5_4of5 /L6_1of6 /L6_2of6 /L6_3of6 /L6_4of6 /L6_5of6 /L7_1of7 /L7_2of7 /L7_3of7 /L7_4of7 /L7_5of7 /L7_6of7 /L8_1of8 /L8_2of8 /L8_3of8 /L8_4of8 /L8_5of8 /L8_6of8 /L8_7of8 /L9_1of9 /L9_2of9 /L9_3of9 /L9_4of9 /L9_5of9 /L9_6of9 /L9_7of9 /L9_8of9 /L10_1of10 /L10_2of10 /L10_3of10 /L10_4of10 /L10_5of10 /L10_6of10 /L10_7of10 /L10_8of10 /L10_9of10 /another /anotherone /anothertwo
+
+PathLengths
+$HADOOP_HOME/bin/hadoop fs -rm -R /pathLengths
+
+Preprocessor
+$HADOOP_HOME/bin/hadoop fs -rm -R /nodes /edges
+
+Cluster
+$HADOOP_HOME/bin/hadoop fs -rm -R /listOfAllTriples /tripleCount /triangleCount
+
+Analysis
+$HADOOP_HOME/bin/hadoop fs -rm -R /GeodesicAverageTable /ClusterCoefficientTable /CL-randomTable
+
+
+
+
+
