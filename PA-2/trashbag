@@ -1,0 +1,317 @@
+		float vertices=0.0f, geoavg = 0.0f, edges = 0.0f, triangleCount = 0.0f, tripleCount = 0.0f;
+		
+		for (int i = 3; i < 5; i++) {
+			File file = new File(args[i]);
+			Scanner scan = new Scanner(file);
+			if (i == 1) {
+				vertices = Float.parseFloat(scan.next());
+			}
+			if (i == 2) {
+				geoavg = Float.parseFloat(scan.next());
+			}
+			if (i == 3) {
+				edges = Float.parseFloat(scan.next());
+			}
+			if (i == 4) {
+				triangleCount = Float.parseFloat(scan.next());
+			}
+			if (i == 5) {
+				tripleCount = Float.parseFloat(scan.next());
+			}
+		}
+		
+		float k = edges/vertices;
+		float Lrandom = (float)Math.log(vertices)/(float)Math.log(k);
+		float Crandom = k/vertices;
+		float cgfn = (3.0f * triangleCount)/tripleCount;
+		
+		String print = "----------------------------------------------------------------------------------\n";
+		print += "|                          | L-gfn     | L-random     | C-gfn     | C-random     |\n";
+		print += "----------------------------------------------------------------------------------";
+		print += "| Google+ Friend Network   | " + Float.toString(geoavg) + "      " + Float.toString(Lrandom);
+		print += "      " + Float.toString(cgfn) + "      " + Float.toString(Crandom) + "\n";
+		print += "----------------------------------------------------------------------------------";
+
+
+
+
+// What Data Structure are you goin to Use?
+// 2D Array?
+
+// 1st Mapper Output: <1st Node, 2nd Node>  
+// Since it is undirected:  1st Node < 2nd Node
+
+// Reducer Input: <1st Node, List of 2nd Nodes>
+// Reducer Output: <1st Node, Unique List of 2nd Nodes>
+
+// 2 Mappers Input: Reducer Output & Original Input
+// 1st Mapper: 
+// Input: Reducer Ouput
+// Output: Reducer Output
+
+// 2nd Mapper: 
+// Input: Original Input
+// Output: Origianl Input
+
+// Reducer:
+// Store 1st Mapper Output into a ListofLists
+// Store 2nd Mapper Output into a Set or Map or ...
+
+// redcuer method:
+// First Index 1st Node in ListofLists and see if 2nd Node is in there
+// if not then Index 2nd Node in ListofLists and see if 1st Node and 
+// Second Node have 
+
+// The Above is wrong, I am just brainstorming
+
+// What you will have to do is discover all the nodes belonging to 
+// a cluster
+// Then put those nodes into a list 
+// Then find the path for every combination of pair of nodes 
+// Remember Path Length Maximum = 10
+// Store values then calculate average path length
+
+// Find all the paths for a particular node.
+
+
+// 1st Step: Get all unique vectors & edges.
+// 2nd Step: Use <Node 1, {List of Nodes 2}> to build cluster for Node 1
+	// Keys will all come in, in sorted order
+	// 1st Store all reducer inputs into a List of Lists
+	// 
+// 
+
+
+
+	public static class FinaleReducer extends Reducer<IntWritable, IntWritable, IntWritable, IntWritable> {
+	
+		private ArrayList<int[]> total;
+		private int verts;
+	
+		@Override
+		protected void setup(Context context) {
+			total = new ArrayList<int[]>();
+			verts = 0;
+		}
+	
+		@Override
+		protected void reduce(IntWritable key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException{
+			int count = 0;
+			for (IntWritable val : values) {
+				if (val > 1) {
+					if (verts == 0) {
+						verts = val;
+					}
+				}
+				else {
+					count++;
+				}
+			}
+			total.add( new int[](key, count) );
+		}
+	
+		@Override
+		protected void cleanup(Context context) throws IOException, InterruptedException {
+			int sum = 0;
+			for (int[] i : total) {
+				sum += i[1];
+				context.write(i[0], i[1]);
+			}
+			float geoAvg = (1.0/(verts * (verts - 1.0))) * sum;
+			context.write(new IntWritable(sum), new IntWritable(verts))
+			context.write(new IntWritable(geoAvg), NullWritable);
+		}
+	}
+
+
+
+
+
+// JAVA program to print all 
+// paths from a source to 
+// destination. 
+import java.util.ArrayList; 
+import java.util.List; 
+  
+// A directed graph using 
+// adjacency list representation 
+public class Graph { 
+  
+    // No. of vertices in graph 
+    private int v; 
+  
+    // adjacency list 
+    private ArrayList<Integer>[] adjList; 
+  
+    // Constructor 
+    public Graph(int vertices) { 
+  
+        // initialise vertex count 
+        this.v = vertices; 
+  
+        // initialise adjacency list 
+        initAdjList(); 
+    } 
+  
+    // utility method to initialise 
+    // adjacency list 
+    @SuppressWarnings("unchecked") 
+    private void initAdjList() { 
+        adjList = new ArrayList[v]; 
+  
+        for (int i = 0; i < v; i++) { 
+            adjList[i] = new ArrayList<>(); 
+        } 
+    } 
+  
+    // add edge from u to v 
+    public void addEdge(int u, int v) { 
+        // Add v to u's list. 
+        adjList[u].add(v); 
+    } 
+  
+    // Prints all paths from 
+    // 's' to 'd' 
+    public void printAllPaths(int s, int d) {  
+        ArrayList<Integer> pathList = new ArrayList<>(); 
+        // add source to path[] 
+        pathList.add(s); 
+
+		boolean[] isVisited = new boolean[v];
+        // Call recursive utility 
+        printAllPathsUtil(s, d, isVisited, pathList); 
+    } 
+  
+    // A recursive function to print 
+    // all paths from 'u' to 'd'. 
+    // isVisited[] keeps track of 
+    // vertices in current path. 
+    // localPathList<> stores actual 
+    // vertices in the current path 
+    private void printAllPathsUtil(Integer u, Integer d, boolean[] isVisited, List<Integer> localPathList) { 
+  	System.out.println("Pen is mightier than the word my lord "+u + " " + d);
+        if (localPathList.size() > 11) {
+			return;
+		}
+		
+        if (u.equals(d)) { 
+            System.out.println(localPathList); 
+            // if match found then no need to traverse more till depth 
+            return; 
+        } 
+        
+        // Mark the current node 
+        isVisited[u] = true; 
+  
+        // Recur for all the vertices 
+        // adjacent to current vertex 
+        for (Integer i : adjList[u]) {
+            if (!isVisited[i]) { 
+                // store current node 
+                // in path[] 
+                localPathList.add(i); 
+                printAllPathsUtil(i, d, isVisited, localPathList); 
+  
+                // remove current node 
+                // in path[] 
+                
+                localPathList.remove(i); 
+            } 
+        } 
+  
+        // Mark the current node 
+        isVisited[u] = false; 
+    } 
+  
+    // Driver program 
+    public static void main(String[] args) { 
+        // Create a sample graph 
+        Graph g = new Graph(5); 
+        g.addEdge(0, 1); 
+        g.addEdge(0, 2); 
+        g.addEdge(0, 3); 
+        g.addEdge(2, 0); 
+        g.addEdge(2, 1); 
+        g.addEdge(1, 3);
+        g.addEdge(1,4); 
+        g.addEdge(4,3);
+  
+        // arbitrary source 
+        int s = 2; 
+  
+        // arbitrary destination 
+        int d = 3; 
+  
+        System.out.println( 
+            "Following are all different paths from "
+            + s + " to " + d); 
+        g.printAllPaths(s, d); 
+    } 
+} 
+  
+// This code is contributed by Himanshu Shekhar. 
+
+
+
+
+
+
+
+
+
+import java.util.LinkedList; 
+class test { 
+
+    private int V; 
+    private LinkedList<Integer>[] adjListArray; 
+
+	@SuppressWarnings("unchecked")
+    public test(int V) { 
+        this.V = V; 
+        adjListArray = new LinkedList[V]; 
+  
+        for(int i = 0; i < V ; i++){ 
+            adjListArray[i] = new LinkedList<Integer>(); 
+        } 
+    } 
+
+    public void addEdge( int src, int dest) { 
+        adjListArray[src].add(dest); 
+
+        adjListArray[dest].add(src); 
+    } 
+      
+    public void DFSUtil(int v, boolean[] visited) { 
+        visited[v] = true; 
+        System.out.print(v+" "); 
+
+        for (int x : adjListArray[v]) { 
+            if(!visited[x]) DFSUtil(x,visited); 
+        } 
+  
+    } 
+
+    public void connectedComponents() { 
+        boolean[] visited = new boolean[V]; 
+        for(int v = 0; v < V; ++v) { 
+            if(!visited[v]) { 
+                DFSUtil(v,visited); 
+                System.out.println(); 
+            } 
+        } 
+    } 
+      
+      
+    // Driver program to test above 
+    public static void main(String[] args){ 
+        // Create a test given in the above diagram  
+        test g = new test(5); // 5 vertices numbered from 0 to 4  
+          
+        g.addEdge(1, 0);  
+        g.addEdge(4, 3);  
+        g.addEdge(3, 2); 
+
+        System.out.println("Following are connected components"); 
+        g.connectedComponents(); 
+    } 
+}     

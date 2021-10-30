@@ -1,0 +1,185 @@
+
+
+Getting Started:  
+Here Are Some Commands To Make Your Life Easier Just Copy And Paste These 
+Commands In Terminal And You Shall Be Okay...
+Obviously You Will Have To Change:
+The Path of The Jar File :  ~/cs435/PA2/PA2.jar
+& The Input File:           /friends_final
+But You Shall Be Okay, Just Alter Those Filds Here To Make It Easier. 
+
+This README Breaksdown What You Need, In What Order and How.
+
+Table of Contents:
+- Time It Takes To Run Program
+- Files Needed To Run A Successful Program
+- Sample Output
+- Order of Execution
+- Remove Files Commands
+- Check File Content Commands
+- Hadoop MapReduce Getting Started Commands
+
+
+
+Takes 17 Minutes To Run Geodesic Average & Less Than 5 Minutes To Run 
+PathLengthsPreprocessor & Cluster Coefficient & Analysis.
+
+
+
+Files Needed To Run A Successful Program:
+Geodesic.java - Calculates & Stores All Possible Paths For A Given Path Length.
+		Format Example For Length 4:  Node1~Node2~Node3~Node4
+PathLengths.java - This Calculates The Path Count for Each Path Length from 
+		   1 to 10 and Stores It All Into One Output File.
+Preprocessor.java - This Outputs A File That Contains No Duplicates for the 
+		    Given Input File & It Also Calculates the Number of Unique
+		    Nodes & Edges Within The Given Input File.
+		    This File Must Be Exectued Before Executing Cluster.java
+Cluster.java - Caluclates the Triple & Triangle Count of the Given Input File
+	       Using the No Duplicates File Calculated From Preprocessor.java.
+Analysis.java - This Brings All the File Aforementioned And Calulates the 
+		GeodesicAverageTable & ClusterCoefficientTable & CL-randomTable.
+		Below is a Sample Output of What The Mentioned Tables Contain.
+README - Absolutely Required to Know What To Execute And In What Order.
+Input File - The Graph.
+
+
+
+Sample Output:
+
+salem:~/cs435/PA2$ $HADOOP_HOME/bin/hadoop fs -cat /GeodesicAverageTable/part-r-00000
+
+----------------------------------------------------------------------------------
+| Path Length of 1 with 13141 paths
+| Path Length of 2 with 3767 paths
+| Path Length of 3 with 2528 paths
+| Path Length of 4 with 1081 paths
+| Path Length of 5 with 525 paths
+| Path Length of 6 with 241 paths
+| Path Length of 7 with 122 paths
+| Path Length of 8 with 65 paths
+| Path Length of 9 with 31 paths
+| Path Length of 10 with 22 paths
+----------------------------------------------------------------------------------
+| Total Shortest Path Length: 38527
+----------------------------------------------------------------------------------
+| Total Number of Vertices: 8877
+----------------------------------------------------------------------------------
+| The Average Geodesic Path Length: 4.889694E-4
+----------------------------------------------------------------------------------
+
+salem:~/cs435/PA2$ $HADOOP_HOME/bin/hadoop fs -cat /ClusterCoefficientTable/part-r-00000
+
+----------------------------------------------------------------------------------
+| Total Number of Triples: 363674
+----------------------------------------------------------------------------------
+| Total Number of Triangles: 1724.0
+----------------------------------------------------------------------------------
+| Global Clustering Coefficient: 0.014221528
+----------------------------------------------------------------------------------
+
+salem:~/cs435/PA2$ $HADOOP_HOME/bin/hadoop fs -cat /CL-randomTable/part-r-00000
+
+----------------------------------------------------------------------------------
+| L-random: 23.175716
+----------------------------------------------------------------------------------
+| C-random: 1.6676157E-4
+----------------------------------------------------------------------------------
+
+salem:~/cs435/PA2$ 
+
+
+Order of Execution:  Part 1 Geodesic & PathLengths   Part 2 Preprocessor & Cluster    Part 3 Analysis
+
+$HADOOP_HOME/bin/hadoop jar ~/cs435/PA2/PA2.jar Geodesic /friends_final /ZeroDuplicates /PathsWithLength1 /unrevisedL2 /PathsWithLength2 /unrevisedL3 /L3w1 /PathsWithLength3 /unrevisedL4 /L4w3 /L4w2 /PathsWithLength4 /unrevisedL5 /L5w4 /L5w3 /L5w2 /PathsWithLength5 /unrevisedL6 /L6w5 /L6w4 /L6w3 /L6w2 /PathsWithLength6 /unrevisedL7 /L7w6 /L7w5 /L7w4 /L7w3 /L7w2 /PathsWithLength7 /unrevisedL8 /L8w7 /L8w6 /L8w5 /L8w4 /L8w3 /L8w2 /PathsWithLength8 /unrevisedL9 /L9w8 /L9w7 /L9w6 /L9w5 /L9w4 /L9w3 /L9w2 /PathsWithLength9 /unrevisedL10 /L10w9 /L10w8 /L10w7 /L10w6 /L10w5 /L10w4 /L10w3 /L10w2 /PathsWithLength10
+
+PathLengths
+$HADOOP_HOME/bin/hadoop jar ~/cs435/PA2/PA2.jar PathLengths /PathsWithLength1 /PathsWithLength2 /PathsWithLength3 /PathsWithLength4 /PathsWithLength5 /PathsWithLength6 /PathsWithLength7 /PathsWithLength8 /PathsWithLength9 /PathsWithLength10 /pathLengths
+
+$HADOOP_HOME/bin/hadoop jar ~/cs435/PA2/PA2.jar Preprocessor /friends_final /nodes /edges /noDuplicates
+
+$HADOOP_HOME/bin/hadoop jar ~/cs435/PA2/PA2.jar Cluster /noDuplicates /listOfAllTriples /tripleCount /triangleCount
+
+$HADOOP_HOME/bin/hadoop jar ~/cs435/PA2/PA2.jar Analysis /pathLengths /nodes /GeodesicAverageTable /triangleCount /tripleCount /ClusterCoefficientTable /edges /CL-randomTable
+
+
+
+
+Remove Files:
+
+Geodesic
+$HADOOP_HOME/bin/hadoop fs -rm -R /ZeroDuplicates /PathsWithLength1 /unrevisedL2 /PathsWithLength2 /unrevisedL3 /L3w1 /PathsWithLength3 /unrevisedL4 /L4w3 /L4w2 /PathsWithLength4 /unrevisedL5 /L5w4 /L5w3 /L5w2 /PathsWithLength5 /unrevisedL6 /L6w5 /L6w4 /L6w3 /L6w2 /PathsWithLength6 /unrevisedL7 /L7w6 /L7w5 /L7w4 /L7w3 /L7w2 /PathsWithLength7 /unrevisedL8 /L8w7 /L8w6 /L8w5 /L8w4 /L8w3 /L8w2 /PathsWithLength8 /unrevisedL9 /L9w8 /L9w7 /L9w6 /L9w5 /L9w4 /L9w3 /L9w2 /PathsWithLength9 /unrevisedL10 /L10w9 /L10w8 /L10w7 /L10w6 /L10w5 /L10w4 /L10w3 /L10w2 /PathsWithLength10
+
+PathLengths
+$HADOOP_HOME/bin/hadoop fs -rm -R /pathLengths
+
+Preprocessor
+$HADOOP_HOME/bin/hadoop fs -rm -R /nodes /edges /noDuplicates
+
+Cluster
+$HADOOP_HOME/bin/hadoop fs -rm -R /listOfAllTriples /tripleCount /triangleCount
+
+Analysis
+$HADOOP_HOME/bin/hadoop fs -rm -R /GeodesicAverageTable /ClusterCoefficientTable /CL-randomTable
+
+
+
+
+Check File Content:
+
+Geodesic
+$HADOOP_HOME/bin/hadoop fs -cat /PathsWithLength1/part-r-00000
+$HADOOP_HOME/bin/hadoop fs -cat /PathsWithLength2/part-r-00000
+$HADOOP_HOME/bin/hadoop fs -cat /PathsWithLength3/part-r-00000
+$HADOOP_HOME/bin/hadoop fs -cat /PathsWithLength4/part-r-00000
+$HADOOP_HOME/bin/hadoop fs -cat /PathsWithLength5/part-r-00000
+$HADOOP_HOME/bin/hadoop fs -cat /PathsWithLength6/part-r-00000
+$HADOOP_HOME/bin/hadoop fs -cat /PathsWithLength7/part-r-00000
+$HADOOP_HOME/bin/hadoop fs -cat /PathsWithLength8/part-r-00000
+$HADOOP_HOME/bin/hadoop fs -cat /PathsWithLength9/part-r-00000
+$HADOOP_HOME/bin/hadoop fs -cat /PathsWithLength10/part-r-00000
+
+PathLengths
+$HADOOP_HOME/bin/hadoop fs -cat /pathLengths/part-r-00000
+
+Preprocessor
+$HADOOP_HOME/bin/hadoop fs -cat /nodes/part-r-00000
+$HADOOP_HOME/bin/hadoop fs -cat /edges/part-r-00000
+$HADOOP_HOME/bin/hadoop fs -cat /noDuplicates/part-r-00000
+
+Cluster
+$HADOOP_HOME/bin/hadoop fs -cat /listOfAllTriples/part-r-00000
+$HADOOP_HOME/bin/hadoop fs -cat /tripleCount/part-r-00000
+$HADOOP_HOME/bin/hadoop fs -cat /triangleCount/part-r-00000
+
+
+Analysis
+$HADOOP_HOME/bin/hadoop fs -cat /GeodesicAverageTable/part-r-00000
+$HADOOP_HOME/bin/hadoop fs -cat /ClusterCoefficientTable/part-r-00000
+$HADOOP_HOME/bin/hadoop fs -cat /CL-randomTable/part-r-00000
+
+
+
+Hadoop MapReduce Getting Started Commands:
+$HADOOP_HOME/sbin/start-dfs.sh
+ssh salem
+$HADOOP_HOME/sbin/start-yarn.sh
+jps
+
+$HADOOP_HOME/bin/hadoop fs -ls /
+$HADOOP_HOME/bin/hadoop fs -put ~/cs435/input.txt /
+
+$HADOOP_HOME/bin/hadoop com.sun.tools.javac.Main Geodesic.java
+$HADOOP_HOME/bin/hadoop com.sun.tools.javac.Main PathLengths.java
+$HADOOP_HOME/bin/hadoop com.sun.tools.javac.Main Preprocessor.java
+$HADOOP_HOME/bin/hadoop com.sun.tools.javac.Main Cluster.java
+$HADOOP_HOME/bin/hadoop com.sun.tools.javac.Main Analysis.java
+
+jar cf PA2.jar Geodesic*.class Cluster*.class Analysis*.class Preprocessor*.class PathLengths*.class
+
+
+
+
+
+
+

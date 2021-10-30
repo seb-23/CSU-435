@@ -1,0 +1,1224 @@
+Theres 2 in here
+
+
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.mapreduce.lib.input.MultipleInputs;
+import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
+
+import com.google.common.collect.Multisets;
+
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.StringTokenizer;
+
+import java.util.*; 
+
+
+public class NewMethod {
+	
+	
+	
+	public static class EdgesMapper extends Mapper<Object, Text, Text, Text> {
+		
+		private Text n;
+		private Text m;
+		
+		@Override
+		protected void map(Object key, Text value, Context context) throws IOException, InterruptedException {
+			
+			StringTokenizer itr = new StringTokenizer(value.toString());
+			
+			while (itr.hasMoreTokens()) {
+				
+				n = new Text( itr.nextToken() );
+				m = new Text( itr.nextToken() );
+				context.write(n, m);
+			}
+		}
+	}
+	
+	public static class CountEdgesReducer extends Reducer<Text, Text, Text, NullWritable>{
+		
+		//private Set<String> distinctEdges
+		private ArrayList<String> distinctEdges;
+		
+		@Override
+		protected void setup(Context context) {
+			//distinctEdges = new HashSet<String>()
+			distinctEdges = new ArrayList<String>();
+		}
+		
+		@Override
+		protected void reduce(Text key, Iterable<Text> values, Context context) {
+			for (Text val : values) {
+				String v = val.toString();
+				String s = key.toString();
+				
+				if (s.length() > v.length() || (s.length() == v.length() && s.compareTo(v) > 0) ) {
+					
+					if (distinctEdges.indexOf(v + "~" + s) == -1) {
+						distinctEdges.add(v + "~" + s);
+					}
+				}
+				
+				else {
+					if (distinctEdges.indexOf(s + "~" + v) == -1) {
+						distinctEdges.add(s + "~" + v);
+					}
+				}
+			}
+		}
+		
+		@Override
+		protected void cleanup(Context context) throws IOException, InterruptedException {
+			for (int i = 0; i < distinctEdges.size(); i++) {
+				context.write(new Text( distinctEdges.get(i) ), NullWritable.get());
+			}
+		}
+	}
+	
+	
+	
+	
+	
+	
+	public static class RemoveEdgesReducer extends Reducer<Text, Text, Text, Text>{
+		
+		private Set<String> distinctEdges ;
+		
+		@Override
+		protected void setup(Context context) {
+			distinctEdges = new HashSet<String>();
+			
+		}
+		
+		@Override
+		protected void reduce(Text key, Iterable<Text> values, Context context) {
+			for (Text val : values) {
+				String v = val.toString();
+				String s = key.toString();
+				
+				if (s.length() > v.length() || (s.length() == v.length() && s.compareTo(v) > 0) ) {
+					distinctEdges.add(v + "~" + s);
+				}
+				
+				else {
+					distinctEdges.add(s + "~" + v);
+				}
+			}
+		}
+		
+		@Override
+		protected void cleanup(Context context) throws IOException, InterruptedException {	
+			for (String s : distinctEdges) {
+				String[] str = s.split("~",2);
+				context.write(new Text(str[0]), new Text(str[1]));
+			}
+		}
+	}
+	
+	
+	public static class GenerateTriplesMapper extends Mapper<Object, Text, Text, Text> {
+	
+		private Text n;
+		private Text m;
+
+		@Override
+		protected void map(Object key, Text value, Context context) throws IOException, InterruptedException {
+			StringTokenizer itr = new StringTokenizer(value.toString());
+			
+			while (itr.hasMoreTokens()) {
+
+				n = new Text( itr.nextToken() );
+				m = new Text( itr.nextToken() );
+				
+				context.write(n, m);
+				context.write(m, n);
+			}
+		}
+	}
+	
+	public static class GenerateTriplesReducer extends Reducer<Text, Text, Text, NullWritable> {
+		
+		
+		class Combination { 
+		  
+			public void combinationUtil(ArrayList<String> s, String data[], int start, int end, int index, ArrayList<String> out) { 
+				if (index == 2) { 
+					for (int j=0; j<2; j++) {
+						out.add(data[j]);
+					}
+					return;
+				} 
+		  
+				for (int i=start; i<=end && end-i+1 >= 2-index; i++) { 
+					data[index] = s.get(i); 
+					combinationUtil(s, data, i+1, end, index+1, out); 
+				} 
+			} 
+		  
+			public void Combinations(ArrayList<String> s, int n, ArrayList<String> out) { 
+				String data[]=new String[2]; 
+				combinationUtil(s, data, 0, n-1, 0, out); 
+			}
+		}
+		
+		private ArrayList<String> nodes;
+		private Combination combo;
+	
+		@Override
+		protected void setup(Context context) {
+			combo = new Combination();
+			nodes = new ArrayList<String>();
+		}
+	
+		@Override
+		protected void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException{
+			nodes.clear();
+			for (Text value : values) {
+				nodes.add(value.toString());
+			}
+			ArrayList<String> out = new ArrayList<String>();
+			combo.Combinations(nodes, nodes.size(), out);
+			for (int j = 0; j < out.size()/2; j++) {
+				String s = out.get(2*j) + "~" + key.toString() + "~" + out.get(2*j+1);
+				context.write(new Text(s), NullWritable.get());
+			}
+		}
+	}
+	
+	
+	
+	
+	public static class LengthAMapper extends Mapper<Object, Text, Text, Text> {
+		
+		@Override
+		protected void map(Object key, Text value, Context context) throws IOException, InterruptedException {
+			
+			// input: 2~56~8
+			String[] s = value.toString().split("~", 0);
+			context.write(new Text(s[0] + "~" + s[s.length-1]), new Text("A" + value.toString()));
+		
+		}
+	}
+	
+	
+	public static class LengthBMapper extends Mapper<Object, Text, Text, Text> {
+		
+		@Override
+		protected void map(Object key, Text value, Context context) throws IOException, InterruptedException {
+			
+			String[] s = value.toString().split("~", 0);
+			context.write(new Text(s[0] + "~" + s[s.length-1]), new Text("B" + value.toString()));
+		
+		}
+	}
+	
+	public static class LengthAdjustmentReducer extends Reducer<Text, Text, Text, NullWritable>{
+		
+		// s.substring(1); remove first char
+		// input: <start~end, path>
+		
+		@Override
+		protected void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
+			String A = "", B = "";
+			
+			for (Text val : values) {
+				String s = val.toString();
+				if (s.charAt(0) == 'A') {
+					A = s.substring(1);
+				}
+				else {
+					B = s.substring(1);
+				}
+			}
+			
+			if (A.isEmpty()) {
+				context.write(new Text(B), NullWritable.get());
+			}
+			
+			else {
+				context.write(new Text(A), NullWritable.get());
+			}
+		}
+	}
+	
+	
+	
+	
+	public static class ListMapper extends Mapper<Object, Text, Text, Text> {
+		
+		@Override
+		protected void map(Object key, Text value, Context context) throws IOException, InterruptedException {
+			
+			StringTokenizer itr = new StringTokenizer(value.toString());
+			
+			while (itr.hasMoreTokens()) {
+
+				String s = itr.nextToken();
+				String c = itr.nextToken();
+				
+				context.write(new Text(s), new Text("L" + c));
+				context.write(new Text(c), new Text("L" + s));
+			}
+		}
+		
+	}
+	
+	
+	public static class PreviousMapper extends Mapper<Object, Text, Text, Text> {
+		
+		@Override
+		protected void map(Object key, Text value, Context context) throws IOException, InterruptedException {
+			
+			// input: 4~9~1~3
+			String[] s = value.toString().split("~", 0);
+			context.write(new Text(s[0]), new Text("P" + value.toString()));
+			context.write(new Text(s[s.length-1]), new Text("P" + value.toString()));
+		
+		}
+	}
+	
+	
+	public static class PlusOneReducer extends Reducer<Text, Text, Text, NullWritable>{
+		
+		private ArrayList<String> P;
+		private ArrayList<String> L;
+		private int len;
+		
+		@Override
+		protected void setup(Context context) {
+			P = new ArrayList<String>();
+			L = new ArrayList<String>();
+			len = 0;
+		}
+		
+		@Override
+		protected void reduce(Text key, Iterable<Text> values, Context context) {
+			
+			for (Text val : values) {
+				String s = val.toString();
+				if (s.charAt(0) == 'P') {
+					P.add(s.substring(1));
+				}
+				else {
+					L.add(s.substring(1));
+				}
+			}
+		}
+		
+		@Override
+		protected void cleanup(Context context) throws IOException, InterruptedException { 
+			
+			for (String G : P) {
+				String[] T = G.split("~", 0);
+				if (T.length-1 > len) {
+					len = T.length-1;
+				}
+			}
+			
+			ArrayList<String> C = new ArrayList<String>();
+			
+			for (String A : P) {
+				String[] S = A.split("~", 0);
+				
+				if (S.length - 1 == len) {
+					inner:
+					for (String B : L) {
+						
+						for (String N : S) {
+							if (N.equals(B)) {
+								break inner;
+							}
+						}
+						
+						if (C.indexOf(S[S.length-1]) == -1) {
+							context.write(new Text( A+"~"+B ), NullWritable.get());
+							C.add(S[S.length-1]);
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	
+	
+	public static void main(String[] args) throws Exception {
+		
+		/*
+		// Job #2
+		Configuration conf2 = new Configuration();
+		Job job2 = Job.getInstance(conf2, "Length 1");
+		
+		job2.setJarByClass(NewMethod.class);
+		job2.setMapperClass(NewMethod.EdgesMapper.class);
+		job2.setReducerClass(NewMethod.CountEdgesReducer.class);
+		
+		job2.setNumReduceTasks(1);
+		
+		job2.setMapOutputKeyClass(Text.class);
+		job2.setMapOutputValueClass(Text.class);
+		
+		job2.setOutputKeyClass(Text.class);
+		job2.setOutputValueClass(NullWritable.class);
+		
+		FileInputFormat.addInputPath(job2, new Path(args[0]));
+		FileOutputFormat.setOutputPath(job2, new Path(args[2]));
+		
+		job2.waitForCompletion(true);
+		
+		
+		// Job #3 
+		Configuration conf3 = new Configuration();
+		Job job3 = Job.getInstance(conf3, "Remove Duplicate Edges:");
+		
+		job3.setJarByClass(NewMethod.class);
+		job3.setMapperClass(NewMethod.EdgesMapper.class);
+		job3.setReducerClass(NewMethod.RemoveEdgesReducer.class);
+		
+		job3.setNumReduceTasks(1);
+		
+		job3.setMapOutputKeyClass(Text.class);
+		job3.setMapOutputValueClass(Text.class);
+		
+		job3.setOutputKeyClass(IntWritable.class);
+		job3.setOutputValueClass(NullWritable.class);
+		
+		FileInputFormat.addInputPath(job3, new Path(args[0]));
+		FileOutputFormat.setOutputPath(job3, new Path(args[1]));
+		
+		job3.waitForCompletion(true);
+		
+		
+		
+		// Job #1
+		Configuration conf = new Configuration();
+		Job job = Job.getInstance(conf, "Generate Length 2");
+		
+		job.setJarByClass(NewMethod.class);
+		job.setMapperClass(NewMethod.GenerateTriplesMapper.class);
+		job.setReducerClass(NewMethod.GenerateTriplesReducer.class);
+		
+		// There Is Only One Reducer
+		job.setNumReduceTasks(1);
+		
+		// Output for Mapper
+		job.setMapOutputKeyClass(Text.class);
+		job.setMapOutputValueClass(Text.class);
+		
+		// Output for Reducer
+		job.setOutputKeyClass(Text.class);
+		job.setOutputValueClass(NullWritable.class);
+		
+		// Input and Outpur Files
+		FileInputFormat.addInputPath(job, new Path(args[0]));
+		FileOutputFormat.setOutputPath(job, new Path(args[3]));
+		
+		// Did The Job Complete?
+		job.waitForCompletion(true);
+		
+		
+		
+		
+		// Job #5
+		Configuration conf5 = new Configuration();
+		Job job5 = Job.getInstance(conf5, "Length 2 Adjustment");
+		
+		job5.setJarByClass(NewMethod.class);
+		job5.setReducerClass(NewMethod.LengthAdjustmentReducer.class);
+		
+		// There Is Only One Reducer
+		job5.setNumReduceTasks(1);
+		
+		// Output for Mapper
+		job5.setMapOutputKeyClass(Text.class);
+		job5.setMapOutputValueClass(Text.class);
+		
+		// Output for Reducer
+		job5.setOutputKeyClass(Text.class);
+		job5.setOutputValueClass(NullWritable.class);
+		
+		
+		MultipleInputs.addInputPath(job5, new Path(args[2]), TextInputFormat.class, NewMethod.LengthAMapper.class);
+		MultipleInputs.addInputPath(job5, new Path(args[3]), TextInputFormat.class, NewMethod.LengthBMapper.class);
+		
+		
+		// Output File
+		FileOutputFormat.setOutputPath(job5, new Path(args[4]));
+		
+		// Did The Job Complete?
+		job5.waitForCompletion(true);
+		
+		*/
+		
+		
+		// Job #6
+		Configuration conf6 = new Configuration();
+		Job job6 = Job.getInstance(conf6, "Length 3");
+		
+		job6.setJarByClass(NewMethod.class);
+		job6.setReducerClass(NewMethod.PlusOneReducer.class);
+		
+		// There Is Only One Reducer
+		job6.setNumReduceTasks(4);
+		
+		// Output for Mapper
+		job6.setMapOutputKeyClass(Text.class);
+		job6.setMapOutputValueClass(Text.class);
+		
+		// Output for Reducer
+		job6.setOutputKeyClass(Text.class);
+		job6.setOutputValueClass(NullWritable.class);
+		
+		
+		MultipleInputs.addInputPath(job6, new Path(args[1]), TextInputFormat.class, NewMethod.ListMapper.class);
+		MultipleInputs.addInputPath(job6, new Path(args[4]), TextInputFormat.class, NewMethod.PreviousMapper.class);
+		
+		
+		// Output File
+		FileOutputFormat.setOutputPath(job6, new Path(args[5]));
+		
+		// Did The Job Complete?
+		job6.waitForCompletion(true);
+		
+		
+		/*
+		// Job #7
+		Configuration conf7 = new Configuration();
+		Job job7 = Job.getInstance(conf7, "Length 3 Adjustment");
+		
+		job7.setJarByClass(NewMethod.class);
+		job7.setReducerClass(NewMethod.LengthAdjustmentReducer.class);
+		
+		// There Is Only One Reducer
+		job7.setNumReduceTasks(1);
+		
+		// Output for Mapper
+		job7.setMapOutputKeyClass(Text.class);
+		job7.setMapOutputValueClass(Text.class);
+		
+		// Output for Reducer
+		job7.setOutputKeyClass(Text.class);
+		job7.setOutputValueClass(NullWritable.class);
+		
+		
+		MultipleInputs.addInputPath(job7, new Path(args[4]), TextInputFormat.class, NewMethod.LengthAMapper.class);
+		MultipleInputs.addInputPath(job7, new Path(args[5]), TextInputFormat.class, NewMethod.LengthBMapper.class);
+		
+		
+		// Output File
+		FileOutputFormat.setOutputPath(job7, new Path(args[6]));
+		
+		// Did The Job Complete?
+		job7.waitForCompletion(true);
+		
+		
+		
+		// Job #8
+		Configuration conf8 = new Configuration();
+		Job job8 = Job.getInstance(conf8, "Length 4");
+		
+		job8.setJarByClass(NewMethod.class);
+		job8.setReducerClass(NewMethod.Length3.class);
+		
+		job8.setNumReduceTasks(1);
+		
+		job8.setMapOutputKeyClass(Text.class);
+		job8.setMapOutputValueClass(Text.class);
+		
+		job8.setOutputKeyClass(Text.class);
+		job8.setOutputValueClass(NullWritable.class);
+		
+		
+		MultipleInputs.addInputPath(job8, new Path(args[1]), TextInputFormat.class, NewMethod.AdjacentListMapper.class);
+		MultipleInputs.addInputPath(job8, new Path(args[5]), TextInputFormat.class, NewMethod.Length3AdjustedMapper.class);
+		
+		
+		FileOutputFormat.setOutputPath(job8, new Path(args[8]));
+		
+		job8.waitForCompletion(true);
+		
+		
+		
+		// Job #9
+		Configuration conf9 = new Configuration();
+		Job job9 = Job.getInstance(conf9, "Length 4 Adjustment");
+		
+		job9.setJarByClass(NewMethod.class);
+		job9.setReducerClass(NewMethod.LengthAdjustmentReducer.class);
+		
+		job9.setNumReduceTasks(1);
+		
+		job9.setMapOutputKeyClass(Text.class);
+		job9.setMapOutputValueClass(Text.class);
+		
+		job9.setOutputKeyClass(Text.class);
+		job9.setOutputValueClass(NullWritable.class);
+		
+		
+		MultipleInputs.addInputPath(job9, new Path(args[8]), TextInputFormat.class, NewMethod.Length4Mapper.class);
+		MultipleInputs.addInputPath(job9, new Path(args[6]), TextInputFormat.class, NewMethod.Length3Mapper.class);
+		
+		
+		FileOutputFormat.setOutputPath(job9, new Path(args[9]));
+		
+		job9.waitForCompletion(true);
+		*/
+		
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+
+import com.google.common.collect.Multisets;
+
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.StringTokenizer;
+
+import java.util.*; 
+
+
+public class NewMethod {
+	
+	
+	
+	public static class EdgesMapper extends Mapper<Object, Text, Text, Text> {
+		
+		private Text n;
+		private Text m;
+		
+		@Override
+		protected void map(Object key, Text value, Context context) throws IOException, InterruptedException {
+			
+			StringTokenizer itr = new StringTokenizer(value.toString());
+			
+			while (itr.hasMoreTokens()) {
+				
+				n = new Text( itr.nextToken() );
+				m = new Text( itr.nextToken() );
+				context.write(n, m);
+			}
+		}
+	}
+	
+	public static class CountEdgesReducer extends Reducer<Text, Text, IntWritable, NullWritable>{
+		
+		private Set<String> distinctEdges ;
+		
+		@Override
+		protected void setup(Context context) {
+			distinctEdges = new HashSet<String>();
+			
+		}
+		
+		@Override
+		protected void reduce(Text key, Iterable<Text> values, Context context) {
+			for (Text val : values) {
+				String v = val.toString();
+				String s = key.toString();
+				
+				if (s.length() > v.length() || (s.length() == v.length() && s.compareTo(v) > 0) ) {
+					distinctEdges.add(v + "~" + s);
+				}
+				
+				else {
+					distinctEdges.add(s + "~" + v);
+				}
+			}
+		}
+		
+		@Override
+		protected void cleanup(Context context) throws IOException, InterruptedException {
+			context.write(new IntWritable( distinctEdges.size() ), NullWritable.get());
+			
+		}
+	}
+	
+	
+	
+	
+	
+	
+	public static class RemoveEdgesReducer extends Reducer<Text, Text, Text, Text>{
+		
+		private Set<String> distinctEdges ;
+		
+		@Override
+		protected void setup(Context context) {
+			distinctEdges = new HashSet<String>();
+			
+		}
+		
+		@Override
+		protected void reduce(Text key, Iterable<Text> values, Context context) {
+			for (Text val : values) {
+				String v = val.toString();
+				String s = key.toString();
+				
+				if (s.length() > v.length() || (s.length() == v.length() && s.compareTo(v) > 0) ) {
+					distinctEdges.add(v + "~" + s);
+				}
+				
+				else {
+					distinctEdges.add(s + "~" + v);
+				}
+			}
+		}
+		
+		@Override
+		protected void cleanup(Context context) throws IOException, InterruptedException {	
+			for (String s : distinctEdges) {
+				String[] str = s.split("~",2);
+				context.write(new Text(str[0]), new Text(str[1]));
+			}
+		}
+	}
+	
+	
+	public static class GenerateTriplesMapper extends Mapper<Object, Text, Text, Text> {
+	
+		private Text n;
+		private Text m;
+
+		@Override
+		protected void map(Object key, Text value, Context context) throws IOException, InterruptedException {
+			StringTokenizer itr = new StringTokenizer(value.toString());
+			
+			while (itr.hasMoreTokens()) {
+
+				n = new Text( itr.nextToken() );
+				m = new Text( itr.nextToken() );
+				
+				context.write(n, m);
+				context.write(m, n);
+			}
+		}
+	}
+	
+	public static class GenerateTriplesReducer extends Reducer<Text, Text, Text, NullWritable> {
+		
+		
+		class Combination { 
+		  
+			public void combinationUtil(ArrayList<String> s, String data[], int start, int end, int index, ArrayList<String> out) { 
+				if (index == 2) { 
+					for (int j=0; j<2; j++) {
+						out.add(data[j]);
+					}
+					return;
+				} 
+		  
+				for (int i=start; i<=end && end-i+1 >= 2-index; i++) { 
+					data[index] = s.get(i); 
+					combinationUtil(s, data, i+1, end, index+1, out); 
+				} 
+			} 
+		  
+			public void Combinations(ArrayList<String> s, int n, ArrayList<String> out) { 
+				String data[]=new String[2]; 
+				combinationUtil(s, data, 0, n-1, 0, out); 
+			}
+		}
+		
+		private ArrayList<String> nodes;
+		private Combination combo;
+	
+		@Override
+		protected void setup(Context context) {
+			combo = new Combination();
+			nodes = new ArrayList<String>();
+		}
+	
+		@Override
+		protected void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException{
+			nodes.clear();
+			for (Text value : values) {
+				nodes.add(value.toString());
+			}
+			ArrayList<String> out = new ArrayList<String>();
+			combo.Combinations(nodes, nodes.size(), out);
+			for (int j = 0; j < out.size()/2; j++) {
+				String s = out.get(2*j) + "~" + key.toString() + "~" + out.get(2*j+1);
+				context.write(new Text(s), NullWritable.get());
+			}
+		}
+	}
+	
+	// CountTriplesMapper Input:  <triple, null>
+	// CountTriplesMapper Output:  <"A", 1>
+	// CountTriplesReducer Input:  <"A", listof1s>
+	// CountTriplesReducer Output: <count, null>
+	
+	public static class CountTriplesMapper extends Mapper<Object, Text, Text, IntWritable> {
+
+		@Override
+		protected void map(Object key, Text value, Context context) throws IOException, InterruptedException {
+			StringTokenizer itr = new StringTokenizer(value.toString());
+			
+			while (itr.hasMoreTokens()) {
+				itr.nextToken();
+				context.write(new Text("A"), new IntWritable(1));
+			}
+		}
+	}
+	
+	public static class CountTriplesReducer extends Reducer<Text, IntWritable, IntWritable, NullWritable> {
+		
+		private int count;
+	
+		@Override
+		protected void setup(Context context) {
+			count = 0;
+		}
+	
+		@Override
+		protected void reduce(Text key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException{
+			for (IntWritable value : values) {
+				count++;
+			}
+		}
+	
+		@Override
+		protected void cleanup(Context context) throws IOException, InterruptedException { 
+			context.write(new IntWritable(count), NullWritable.get());
+		}
+	}
+	
+	
+	
+	
+	
+	
+	public static class LengthAMapper extends Mapper<Object, Text, Text, Text> {
+		
+		private Text A = new Text("A");
+		
+		@Override
+		protected void map(Object key, Text value, Context context) throws IOException, InterruptedException {
+			
+			// input: 2~56~8
+			String[] s = value.toString().split("~", 0);
+			// context.write(new Text(s[0] + "~" + s[s.length()-1]), new Text("A" + value.toString()));
+			context.write(new Text(s[0] + "~" + s[s.length()-1]), A + value);
+		
+		}
+	}
+	
+	
+	public static class LengthBMapper extends Mapper<Object, Text, Text, Text> {
+		
+		private Text B = new Text("B");
+		
+		@Override
+		protected void map(Object key, Text value, Context context) throws IOException, InterruptedException {
+			
+			String[] s = value.toString().split("~", 0);
+			context.write(new Text(s[0] + "~" + s[s.length()-1]), B + value);
+		
+		}
+	}
+	
+	public static class LengthAdjustmentReducer extends Reducer<Text, Text, IntWritable, NullWritable>{
+		
+		// s.substring(1); remove first char
+		// input: <start~end, path>
+		
+		@Override
+		protected void reduce(Text key, Iterable<Text> values, Context context) {
+			String A = "", B = "";
+			
+			for (Text val : values) {
+				String s = val.toString();
+				if (s.charAt(0) == 'A') {
+					A = s.substring(1);
+				}
+				else {
+					B = s.substring(1);
+				}
+			}
+			
+			if (A.isEmpty()) {
+				context.write(key, new Text(B));
+			}
+		}
+	}
+	
+	
+	
+	
+	public static class ListMapper extends Mapper<Object, Text, Text, Text> {
+		
+		private Text L = new Text("L");
+		
+		@Override
+		protected void map(Object key, Text value, Context context) throws IOException, InterruptedException {
+			
+			// input: 10 20
+			//        15 68
+			String[] s = value.toString().trim().split(" ", 0);
+			context.write(new Text(s[0]), L + new Text(s[1]));
+			context.write(new Text(s[1]), L + new Text(s[0]));
+			
+		}
+	}
+	
+	
+	public static class PreviousMapper extends Mapper<Object, Text, Text, Text> {
+		
+		Text P = new Text("P");
+		
+		@Override
+		protected void map(Object key, Text value, Context context) throws IOException, InterruptedException {
+			
+			// input: 4~9~1~3
+			String[] s = value.toString().split("~", 0);
+			context.write(new Text(s[0]), value);
+			context.write(new Text(s[s.length()-1]), P + value);
+		
+		}
+	}
+	
+	
+	public static class PlusOneReducer extends Reducer<Text, Text, Text, NullWritable>{
+		
+		private ArrayList<String> P;
+		private ArrayList<String> L;
+		
+		@Override
+		protected void setup(Context context) {
+			P = new ArrayList<String>();
+			L = new ArrayList<String>();
+		}
+		
+		@Override
+		protected void reduce(Text key, Iterable<Text> values, Context context) {
+			
+			for (Text val : values) {
+				String s = val.toString();
+				if (s.charAt(0) == 'P') {
+					P.add(s.substring(1));
+				}
+				else {
+					L.add(s.substring(1));
+				}
+			}
+		}
+		
+		@Override
+		protected void cleanup(Context context) throws IOException, InterruptedException { 
+			ArrayList<String> C = new ArrayList<String>();
+			
+			for (String A : P) {
+				String[] S = A.split("~", 0);
+				
+				inner:
+				for (String B : L) {
+					
+					for (String N : S) {
+						if (N.equals(B)) {
+							break inner;
+						}
+					}
+					
+					if (C.indexOf(S[S.length-1]) == -1) {
+						context.write(new Text( A+"~"+B ), NullWritable.get());
+						C.add(S[S.length-1]);
+					}
+				}
+			}
+		}
+	}
+	
+	
+	
+	public static void main(String[] args) throws Exception {
+		
+		
+		// Job #2
+		Configuration conf2 = new Configuration();
+		Job job2 = Job.getInstance(conf2, "Length 1");
+		
+		job2.setJarByClass(NewMethod.class);
+		job2.setMapperClass(NewMethod.EdgesMapper.class);
+		job2.setReducerClass(NewMethod.CountEdgesReducer.class);
+		
+		job2.setNumReduceTasks(1);
+		
+		job2.setMapOutputKeyClass(Text.class);
+		job2.setMapOutputValueClass(Text.class);
+		
+		job2.setOutputKeyClass(IntWritable.class);
+		job2.setOutputValueClass(NullWritable.class);
+		
+		FileInputFormat.addInputPath(job2, new Path(args[0]));
+		FileOutputFormat.setOutputPath(job2, new Path(args[2]));
+		
+		job2.waitForCompletion(true);
+		
+		
+		// Job #3 
+		Configuration conf3 = new Configuration();
+		Job job3 = Job.getInstance(conf3, "Remove Duplicate Edges:");
+		
+		job3.setJarByClass(NewMethod.class);
+		job3.setMapperClass(NewMethod.EdgesMapper.class);
+		job3.setReducerClass(NewMethod.RemoveEdgesReducer.class);
+		
+		job3.setNumReduceTasks(1);
+		
+		job3.setMapOutputKeyClass(Text.class);
+		job3.setMapOutputValueClass(Text.class);
+		
+		job3.setOutputKeyClass(IntWritable.class);
+		job3.setOutputValueClass(NullWritable.class);
+		
+		FileInputFormat.addInputPath(job3, new Path(args[0]));
+		FileOutputFormat.setOutputPath(job3, new Path(args[1]));
+		
+		System.exit(job3.waitForCompletion(true) ? 0 : 1);
+		
+		
+		
+		// Job #1
+		Configuration conf = new Configuration();
+		Job job = Job.getInstance(conf, "Generate Length 2");
+		
+		job.setJarByClass(NewMethod.class);
+		job.setMapperClass(NewMethod.GenerateTriplesMapper.class);
+		job.setReducerClass(NewMethod.GenerateTriplesReducer.class);
+		
+		// There Is Only One Reducer
+		job.setNumReduceTasks(1);
+		
+		// Output for Mapper
+		job.setMapOutputKeyClass(Text.class);
+		job.setMapOutputValueClass(Text.class);
+		
+		// Output for Reducer
+		job.setOutputKeyClass(Text.class);
+		job.setOutputValueClass(NullWritable.class);
+		
+		// Input and Outpur Files
+		FileInputFormat.addInputPath(job, new Path(args[0]));
+		FileOutputFormat.setOutputPath(job, new Path(args[3]));
+		
+		// Did The Job Complete?
+		job.waitForCompletion(true);
+		
+		/*
+		// Job #2
+		Configuration conf4 = new Configuration();
+		Job job4 = Job.getInstance(conf4, "Count Length 2");
+		
+		job4.setJarByClass(NewMethod.class);
+		job4.setMapperClass(NewMethod.CountTriplesMapper.class);
+		job4.setReducerClass(NewMethod.CountTriplesReducer.class);
+		
+		// There Is Only One Reducer
+		job4.setNumReduceTasks(1);
+		
+		// Output for Mapper
+		job4.setMapOutputKeyClass(Text.class);
+		job4.setMapOutputValueClass(IntWritable.class);
+		
+		// Output for Reducer
+		job4.setOutputKeyClass(IntWritable.class);
+		job4.setOutputValueClass(NullWritable.class);
+		
+		// Input and Outpur Files
+		FileInputFormat.addInputPath(job4, new Path(args[3]));
+		FileOutputFormat.setOutputPath(job4, new Path(args[4]));
+		
+		// Did The Job Complete?
+		job4.waitForCompletion(true);
+		*/
+		
+		
+		
+		// Job #5
+		Configuration conf5 = new Configuration();
+		Job job5 = Job.getInstance(conf5, "Length 2 Adjustment");
+		
+		job5.setJarByClass(NewMethod.class);
+		job5.setReducerClass(NewMethod.LengthAdjustmentReducer.class);
+		
+		// There Is Only One Reducer
+		job5.setNumReduceTasks(1);
+		
+		// Output for Mapper
+		job5.setMapOutputKeyClass(Text.class);
+		job5.setMapOutputValueClass(Text.class);
+		
+		// Output for Reducer
+		job5.setOutputKeyClass(Text.class);
+		job5.setOutputValueClass(NullWritable.class);
+		
+		
+		MultipleInputs.addInputPath(job5, new Path(args[2]), TextInputFormat.class, NewMethod.LengthAMapper.class);
+		MultipleInputs.addInputPath(job5, new Path(args[3]), TextInputFormat.class, NewMethod.LengthBMapper.class);
+		
+		
+		// Output File
+		FileOutputFormat.setOutputPath(job5, new Path(args[4]));
+		
+		// Did The Job Complete?
+		System.exit(job5.waitForCompletion(true) ? 0 : 1);
+		
+		
+		
+		
+		// Job #6
+		Configuration conf6 = new Configuration();
+		Job job6 = Job.getInstance(conf6, "Length 3");
+		
+		job6.setJarByClass(NewMethod.class);
+		job6.setReducerClass(NewMethod.PlusOneReducer.class);
+		
+		// There Is Only One Reducer
+		job6.setNumReduceTasks(1);
+		
+		// Output for Mapper
+		job6.setMapOutputKeyClass(Text.class);
+		job6.setMapOutputValueClass(Text.class);
+		
+		// Output for Reducer
+		job6.setOutputKeyClass(Text.class);
+		job6.setOutputValueClass(NullWritable.class);
+		
+		
+		MultipleInputs.addInputPath(job6, new Path(args[1]), TextInputFormat.class, NewMethod.ListMapper.class);
+		MultipleInputs.addInputPath(job6, new Path(args[4]), TextInputFormat.class, NewMethod.PreviousMapper.class);
+		
+		
+		// Output File
+		FileOutputFormat.setOutputPath(job6, new Path(args[5]));
+		
+		// Did The Job Complete?
+		System.exit(job6.waitForCompletion(true) ? 0 : 1);
+		
+		
+		
+		// Job #7
+		Configuration conf7 = new Configuration();
+		Job job7 = Job.getInstance(conf7, "Length 3 Adjustment");
+		
+		job7.setJarByClass(NewMethod.class);
+		job7.setReducerClass(NewMethod.LengthAdjustmentReducer.class);
+		
+		// There Is Only One Reducer
+		job7.setNumReduceTasks(1);
+		
+		// Output for Mapper
+		job7.setMapOutputKeyClass(Text.class);
+		job7.setMapOutputValueClass(Text.class);
+		
+		// Output for Reducer
+		job7.setOutputKeyClass(Text.class);
+		job7.setOutputValueClass(NullWritable.class);
+		
+		
+		MultipleInputs.addInputPath(job7, new Path(args[4]), TextInputFormat.class, NewMethod.LengthAMapper.class);
+		MultipleInputs.addInputPath(job7, new Path(args[5]), TextInputFormat.class, NewMethod.LengthBMapper.class);
+		
+		
+		// Output File
+		FileOutputFormat.setOutputPath(job7, new Path(args[6]));
+		
+		// Did The Job Complete?
+		System.exit(job7.waitForCompletion(true) ? 0 : 1);
+		
+		
+		/*
+		// Job #8
+		Configuration conf8 = new Configuration();
+		Job job8 = Job.getInstance(conf8, "Length 4");
+		
+		job8.setJarByClass(NewMethod.class);
+		job8.setReducerClass(NewMethod.Length3.class);
+		
+		job8.setNumReduceTasks(1);
+		
+		job8.setMapOutputKeyClass(Text.class);
+		job8.setMapOutputValueClass(Text.class);
+		
+		job8.setOutputKeyClass(Text.class);
+		job8.setOutputValueClass(NullWritable.class);
+		
+		
+		MultipleInputs.addInputPath(job8, new Path(args[1]), TextInputFormat.class, NewMethod.AdjacentListMapper.class);
+		MultipleInputs.addInputPath(job8, new Path(args[5]), TextInputFormat.class, NewMethod.Length3AdjustedMapper.class);
+		
+		
+		FileOutputFormat.setOutputPath(job8, new Path(args[8]));
+		
+		job8.waitForCompletion(true);
+		
+		
+		
+		// Job #9
+		Configuration conf9 = new Configuration();
+		Job job9 = Job.getInstance(conf9, "Length 4 Adjustment");
+		
+		job9.setJarByClass(NewMethod.class);
+		job9.setReducerClass(NewMethod.LengthAdjustmentReducer.class);
+		
+		job9.setNumReduceTasks(1);
+		
+		job9.setMapOutputKeyClass(Text.class);
+		job9.setMapOutputValueClass(Text.class);
+		
+		job9.setOutputKeyClass(Text.class);
+		job9.setOutputValueClass(NullWritable.class);
+		
+		
+		MultipleInputs.addInputPath(job9, new Path(args[8]), TextInputFormat.class, NewMethod.Length4Mapper.class);
+		MultipleInputs.addInputPath(job9, new Path(args[6]), TextInputFormat.class, NewMethod.Length3Mapper.class);
+		
+		
+		FileOutputFormat.setOutputPath(job9, new Path(args[9]));
+		
+		job9.waitForCompletion(true);
+		*/
+		
+	}
+}
+
+
+
+
+
+
+
