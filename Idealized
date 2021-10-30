@@ -1,0 +1,119 @@
+
+import org.apache.spark.sql.SparkSession
+
+object Idealized {
+	
+	def main(args: Array[String]): Unit = {
+
+		val sc = SparkSession.builder().master("spark://pierre:30160").getOrCreate().sparkContext
+		
+		val titles = sc.textFile(args(0),10).zipWithIndex().mapValues(x=>x+1).map(_.swap).persist() 
+		// titles.persist()  // is persist() necessary? Is persist() or cache() better?
+		
+		val lines = sc.textFile(args(0),10)
+		val links = lines.map(s=>(s.split(": ")(0), s.split(": ")(1))).persist()
+		
+		val count = links.keys().count().persist()
+		// val count = links.count()       does this work?
+		
+		// total number of links => max link key number
+		//val convertStringToLong = links map{case(k,v) => (k.toLong)}
+		//val count = convertStringToLong.max.toFloat
+		// val count = links.maxBy(_._1) // https://www.edureka.co/community/5053/how-to-find-max-value-in-pair-rdd
+		// val count = links.reduceByKey(math.max(_, _))   // https://stackoverflow.com/questions/37016427/get-the-max-value-for-each-key-in-a-spark-rdd
+		
+		val ranks = links.mapValues(k=>(1.0f/count))
+		
+		for(i<-1 to 25) {
+			// flatMapValues? instead of .values.flatMap
+			tempRank = links.join(ranks,10).values.flatMap{
+				
+				case(urls,rank) => (urls.split(" ").map(url=>(url, rank/urls.split(" ").count().toFloat)))
+				
+			}
+				
+			ranks = tempRank.reduceByKey(_+_)
+			
+		}
+		
+		//val out = titles.join(ranks)
+		//val put = out.values.top(10, key=lambda x: x[1])
+		
+		// Best One
+		val out = titles.join(ranks).values
+		val put = out.top(10, key=lambda x: x[1])
+		// Best One
+		
+		//val out = titles.join(ranks).map{case(k,v) => (v._1, v._2)}
+		//val put = out.top(10, key=lambda x: x[1])
+		
+		put.saveAsTextFile(args(1))
+		
+		
+		//val put = out.sortBy(_._2._2).take(10)  i think it is better not to use take()
+	}
+}
+
+	
+	// titles
+	// (1, love)
+	// (2, live)
+	// (3, laugh)
+	// (4, amor)
+	
+	// ranks
+	// (2, 0.24)
+	// (4, 0.26)
+	// (1, 0.20)
+	// (3, 0.30)
+	
+	//val out = titles.join(ranks).map{case(k,v) => (v._1, v._2)}
+	//val put = out.top(10, key=lambda x: x[1])
+	val out = titles.join(ranks)
+	// (1,(love,0.20))
+	// (2,(live,0.24))
+	// (3,(laugh,0.30))
+	// (4,(amor,0.26))
+	val redo = out map{case(k,v) => (v._1, v._2)} // https://stackoverflow.com/questions/9130368/map-both-keys-and-values-of-a-scala-map
+	// (love,0.20)
+	// (live,0.24)
+	// (laugh,0.30)
+	// (amor,0.26)
+	val put = redo.top(10, key=lambda x: x[1])
+	
+	// val put = out.values().sortBy(_._2, false).take(10) 
+	// .limit
+	//val put = out.values.top(10)
+	val put = out.values.top(10, key=lambda x: x[1])
+	//val put = out.values.sortBy(_._2, false).top(10)
+	//val put = out.values().map(_.swap).sortByKey().desc().top(10)
+	//val put = out.values.sortBy(_._2, false).top(10, key=lambda x: x[1]) https://stackoverflow.com/questions/31882221/spark-select-top-values-in-rdd
+	//val put = out.sortBy(_._2._2).take(10)
+
+	put.saveAsTextFile(args(1))
+	// sc.parallelize(put).saveAsTextFile(args(1))   https://stackoverflow.com/questions/34412915/how-to-store-the-result-of-an-action-in-apache-spark-using-scala
+	// sc.parallelize(Seq(put)).saveAsTextFile(args(1))
+	
+	
+
+    
+    val v = links map {case(k, v) => (k, 1/links.lookup(k).count())}
+    
+    
+    
+    val multiply = (m: Int, n: Int) => {m*n}
+    // Actions on pair RDDs(example({(1,2),(3,4),(3,6)}))
+    // lookup(key)  return all values associated with the provided key   
+    // rdd.lookup(3)  result:  [4,6]
+    
+    // countByKey()  Count the number of elements for each key   
+    // rdd.countByKey()   result:   {(1,1),(3,2)}
+    // rdd = sc.parallelize((('1',11),('1',),('11',),('11',1)))
+	// rdd.countByKey().items()
+	// #[('1', 2), ('11', 2)]
+    
+    // count()   Returns the number of keys in the RDD
+
+
+
+

@@ -1,0 +1,56 @@
+
+ JavaRDD< String > lines = sc.parallelize( Arrays.asList(" hello world", "hi"));
+
+ JavaRDD< String > words = lines.flatMap(new FlatMapFunction< String, String >() { 
+ 		public Iterable< String > call( String line) { 
+     		return Arrays.asList(line.split(" "));
+ 		} 
+ });
+ 
+// val v = links map {case(k, v) => (k, 1/links.lookup(k).count())}
+// val v = keys map {case(k, v) => (k, 1/links.lookup(k).count())}
+
+ words.first(); // returns "hello"
+
+
+// read in file 
+// use groupByKey()  ex:https://backtobazics.com/big-data/spark/apache-spark-groupbykey-example/ 
+							  // google search:  groupbykey scala
+// Creating Pair RDDs
+PairFunction< String, String, String > keyData= new PairFunction< String, String, String >() { 
+	public Tuple2 < String, String > call(String x) { 
+		return new Tuple2(x.split(" ")[0], x); 
+	} 
+}; 
+
+JavaPairRDD<String,String> pairs =lines.mapToPair(keyData);
+pairs.first(); // what would this return?
+
+
+
+// how do I create a matrix?
+	// #ofNodes x #ofNodes (66 rows x 66 columns using links.txt)
+// only 25 iterations
+// initial vector is:  1/#ofNodes for each entry (1/66 using links.txt   :   66 rows x 1 column) 
+// outupt must be the vector for 25 iterations
+
+
+
+    JavaRDD<String> lines = spark.read().textFile(args[0]).zipWithIndex().mapValues(x=>x+1).map(_.swap);
+    JavaRDD<String> words = lines.flatMap(s -> Arrays.asList(SPACE.split(s)).iterator());
+    sc.textFile(args(0)).zipWithIndex().mapValues(x=>x+1).map(_.swap);
+    
+    
+    
+    // Is this proper?
+    
+    links.map(n=>(n, links.lookup(n).map(x=>(x*links.lookup(n).count()))));
+    links.zipWithIndex().mapValues(x=>x+1).map(_.swap);
+    val v = links map {case(k, v) => (k, 1/links.lookup(k).count())}
+    
+    
+    
+    
+    
+// Native Error  https://www.stefaanlippens.net/spark-native-hadoop.html
+
