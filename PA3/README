@@ -1,0 +1,44 @@
+
+
+
+	IdealizedFinal Output:
+	(United_States,0.0021522786)
+	(2007,0.001445094)
+	(2008,0.001377758)
+	(United_Kingdom,0.0010943713)
+	(Wiktionary,9.18971E-4)
+	(2006,9.1541E-4)
+	(Geographic_coordinate_system,9.087713E-4)
+	(Wikimedia_Commons,8.838304E-4)
+	(France,7.8213966E-4)
+	(English_language,6.438329E-4)
+
+
+	TaxationFinal Output:
+	(United_States,0.0015156654)
+	(2007,9.534029E-4)
+	(2008,9.294866E-4)
+	(Geographic_coordinate_system,8.584844E-4)
+	(United_Kingdom,7.083234E-4)
+	(2006,5.8151956E-4)
+	(France,5.1515835E-4)
+	(Wikimedia_Commons,4.8352926E-4)
+	(Canada,4.5450134E-4)
+	(Biography,4.4101704E-4)
+
+
+
+
+	WikiBombFinal Output:
+	(Rocky_Mountain_National_Park,1.6707645E-16)
+	(Windsurfing,1.523272E-16)
+	(Spock_(windsurfing),9.044541E-17)
+	(Vulcan_(windsurfing),4.2730615E-17)
+	(Grubby_(windsurfing),4.2730615E-17)
+	(Kitesurfing,1.549368E-17)
+	(Boom_(windsurfing),7.60131E-18)
+	(Surfing,6.3132898E-18)
+	(Tow-in_surfing,5.289158E-18)
+	(Kite_surfing,5.087365E-18)
+
+
